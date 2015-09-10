@@ -17,9 +17,7 @@ namespace Prices.Hubs
 		private static List<UserProductsModel> UserProducts = new List<UserProductsModel>();
 		private static object _lock = new Object();
 
-		private static bool ConnectionStarted = false;
-
-
+		#region client methods
 		private void SendPrices(string products, string connectionId)
 		{
 			Clients.Client(connectionId).sendPrices(products);
@@ -33,7 +31,9 @@ namespace Prices.Hubs
 				UserProducts.Where(p => p.ConnectionId == Context.ConnectionId).First().ProductIds = productIds.Split(',');
 
 		}
+		#endregion
 
+		#region events
 		public override System.Threading.Tasks.Task OnConnected()
 		{
 			if (ServiceConsumerTimer == null)
@@ -47,17 +47,7 @@ namespace Prices.Hubs
 			UserProducts.RemoveAll(p => p.ConnectionId == Context.ConnectionId);
 
 			return base.OnDisconnected(stopCalled);
-		}
-
-		private void InitialiseTimer()
-		{
-			ServiceConsumerTimer = new System.Timers.Timer(1000);
-			ServiceConsumerTimer.Elapsed += OnServiceRefresh;
-			ServiceConsumerTimer.AutoReset = true;
-			ServiceConsumerTimer.Enabled = true;
-
-			ConnectionStarted = true;
-		}
+		}		
 
 		private void OnServiceRefresh(object sender, System.Timers.ElapsedEventArgs e)
 		{
@@ -79,6 +69,15 @@ namespace Prices.Hubs
 					SendPrices(parsedProducts, userProduct.ConnectionId);
 				}
 			}
+		}
+		#endregion
+
+		private void InitialiseTimer()
+		{
+			ServiceConsumerTimer = new System.Timers.Timer(1000);
+			ServiceConsumerTimer.Elapsed += OnServiceRefresh;
+			ServiceConsumerTimer.AutoReset = true;
+			ServiceConsumerTimer.Enabled = true;
 		}
 
 		private string ParseProductsToHTML(List<ProducModel> products)
