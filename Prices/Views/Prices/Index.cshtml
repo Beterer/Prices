@@ -1,0 +1,49 @@
+﻿@{
+	string prods = String.Empty;
+	foreach (var product in ViewBag.products)
+	{
+		prods += "<input type=\"checkbox\" id=\"" + product.ProductId + "\">" + product.ProductName + "<br>"; 
+	}
+}
+
+<div id="product-select">
+	<h4>Select The Products You Want To Watch</h4>
+	<div id="all-products">
+		@Html.Raw(prods)
+	</div>
+	<input type="button" id="btn-start-watching"value="Start Watching" />
+</div>
+<div class="container" style="visibility:hidden">
+
+</div>
+@section scripts {
+	<script src="~/Scripts/jquery.signalR-2.2.0.min.js"></script>
+	<script src="~/signalr/hubs"></script>
+
+	<script>
+		$(function () {
+			//SignalR
+			var pricesHub = $.connection.pricesHub;
+
+			pricesHub.client.sendPrices = function (products) {
+				// Add the message to the page. 
+				$('.container').html(products);
+			};
+
+			$.connection.hub.start();
+			//UI
+			var checked = '';
+			$("#btn-start-watching").click(function () {
+				$("input:checked").each(function () {
+					var $this = $(this);
+					checked += $this.attr("id") + ',';
+				});
+				checked = checked.substring(0, checked.length - 1);
+				pricesHub.server.attachUserToProducts(checked);
+
+				checked = '';
+				$(".container").css("visibility", "visible")
+			});
+		});
+	</script>
+}
